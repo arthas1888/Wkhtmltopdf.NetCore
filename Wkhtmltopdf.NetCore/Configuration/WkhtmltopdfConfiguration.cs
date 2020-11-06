@@ -33,9 +33,24 @@ namespace Wkhtmltopdf.NetCore
 
             var fileProvider = new UpdateableFileProvider();
             services.AddMvc()
-                .AddRazorRuntimeCompilation(options => options.FileProviders.Add(fileProvider))
+                // .AddRazorRuntimeCompilation(options => options.FileProviders.Add(fileProvider))
                 .SetCompatibilityVersion(CompatibilityVersion.Latest);
             return AddCore(services, fileProvider);
+        }
+
+        /// <summary>
+        ///     Setup Rotativa library.
+        /// </summary>
+        /// <param name="builder">The <see cref="IMvcBuilder" />.</param>
+        /// <param name="args"></param>
+        /// <returns>The <see cref="IMvcBuilder" />.</returns>
+        public static IMvcBuilder AddWkhtmltopdf<T>(
+            this IMvcBuilder builder,
+            string pathWindows = null,
+            string pathLinux = null
+        ) where T : class, IWkhtmltopdfPathProvider
+        {
+            return AddWkhtmltopdfInternal<T>(builder, null, ServiceLifetime.Singleton, args: new object[] { pathWindows, pathLinux });
         }
 
         /// <summary>
@@ -48,10 +63,11 @@ namespace Wkhtmltopdf.NetCore
         /// <returns>The <see cref="IMvcBuilder" />.</returns>
         public static IMvcBuilder AddWkhtmltopdf<T>(
             this IMvcBuilder builder,
-            ServiceLifetime lifetime = ServiceLifetime.Singleton
+            ServiceLifetime lifetime = ServiceLifetime.Singleton,
+            params object[] args
         ) where T : class, IWkhtmltopdfPathProvider
         {
-            return AddWkhtmltopdfInternal<T>(builder, null, lifetime);
+            return AddWkhtmltopdfInternal<T>(builder, null, lifetime, args: args);
         }
 
         /// <summary>
@@ -75,11 +91,14 @@ namespace Wkhtmltopdf.NetCore
         private static IMvcBuilder AddWkhtmltopdfInternal<T>(
             IMvcBuilder builder,
             Func<IServiceProvider, T> factory,
-            ServiceLifetime lifetime)
+            ServiceLifetime lifetime,
+            params object[] args)
             where T : class, IWkhtmltopdfPathProvider
         {
+            var instance = Activator.CreateInstance(typeof(T), args);
+            
             builder.Services.TryAdd(factory == null
-                ? new ServiceDescriptor(typeof(IWkhtmltopdfPathProvider), typeof(T), lifetime)
+                ? new ServiceDescriptor(typeof(IWkhtmltopdfPathProvider), instance) //typeof(T), lifetime)
                 : new ServiceDescriptor(typeof(IWkhtmltopdfPathProvider), factory, lifetime));
 
             AddCore(builder.Services, new UpdateableFileProvider());

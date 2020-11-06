@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -18,7 +19,7 @@ namespace Wkhtmltopdf.NetCore
 
         /* <inheritDoc /> */
         public byte[] Convert(IConvertOptions options, string html) => Convert(_pathProvider, options.GetConvertOptions(), html);
-        
+
         /// <summary>
         /// Converts given URL or HTML string to PDF.
         /// </summary>
@@ -49,7 +50,7 @@ namespace Wkhtmltopdf.NetCore
                 throw new Exception("wkhtmltopdf not found, searched for " + rotativaLocation);
             }
 
-            return Convert(new ExactPathProvider(rotativaLocation), switches, html);
+            return Convert(new ExactPathProvider(rotativaLocation,  ""), switches, html);
         }
 
         /// <summary>
@@ -130,7 +131,7 @@ namespace Wkhtmltopdf.NetCore
 
             return ms.ToArray();
         }
-              
+
         /// <summary>
         /// Encode all special chars
         /// </summary>
